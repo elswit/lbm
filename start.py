@@ -13,17 +13,24 @@ from lbm.src.core.run     import *
 if __name__ == '__main__':
 
     # Check command-line input
-    if (len(sys.argv) == 2):
+    if (len(sys.argv) > 1):
         app_name = sys.argv[1]
     else:
         print('Command line error, please use as follows:')
         print('python3 start.py app_name')
 
+    if app_name == 'stepVar':
+        if len(sys.argv) == 2:
+            app = app_factory.create(app_name)
+    else:
+        exit()
+
+    print(app)
     # Instanciate app
-    app = app_factory.create(app_name)
+    #app = app_factory.create(app_name)
 
     # Instanciate lattice
-    ltc = lattice(app)
+    #ltc = lattice(app)
 
     # Run
-    run(ltc, app)
+    #run(ltc, app)
