@@ -37,7 +37,7 @@ class stepVar(base_app):
         # Deduce remaining lbm parameters
         self.compute_lbm_parameters()
         
-    def create_obstacles(self, obs_1_size=1.5, obs_2_size=1.5 ):
+    def create_obstacles(self, obs_1_size=1.5, obs_2_size=1.5):
 
         # Obstacles
         self.obstacles = []
