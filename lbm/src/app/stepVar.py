@@ -36,12 +36,15 @@ class stepVar(base_app):
 
         # Deduce remaining lbm parameters
         self.compute_lbm_parameters()
+        
+    def create_obstacles(self, obs_1_size=1.5, obs_2_size=1.5 ):
 
         # Obstacles
         self.obstacles = []
-        square1 = obstacle('square1', 4, 100, 'square', 1.5, [1.5,1.0])
+        # name, n_pts, n_sample pts, type, size, pos):
+        square1 = obstacle('square1', 4, 100, 'square', obs_1_size, [1.5,1.0])
         self.obstacles.append(square1)
-        square2 = obstacle('square2', 4, 100, 'square', 1.5, [4.0,-1.0])
+        square2 = obstacle('square2', 4, 100, 'square', obs_2_size, [4.0,-1.0])
         self.obstacles.append(square2)
 
     ### Compute remaining lbm parameters

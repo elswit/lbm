@@ -12,25 +12,21 @@ from lbm.src.core.run     import *
 ########################
 if __name__ == '__main__':
 
-    # Check command-line input
-    if (len(sys.argv) > 1):
-        app_name = sys.argv[1]
+    if len(sys.argv) == 2:
+        app_name = 'stepVar'
+        app = app_factory.create(app_name)
+        
+        app.create_obstacles(obs_1_size = 1.5, obs_2_size = 1.0)
+        
+        ltc = lattice(app)
+        run(ltc, app)
+    
     else:
-        print('Command line error, please use as follows:')
-        print('python3 start.py app_name')
-
-    if app_name == 'stepVar':
-        if len(sys.argv) == 2:
-            app = app_factory.create(app_name)
-    else:
+        print('Unrecognized configuration, got the following arguments:')
+        print(sys.argv)
         exit()
+    
 
-    print(app)
-    # Instanciate app
-    #app = app_factory.create(app_name)
 
-    # Instanciate lattice
-    #ltc = lattice(app)
 
-    # Run
-    #run(ltc, app)
+
