@@ -9,25 +9,26 @@ from lbm.src.utils.buff    import *
 from lbm.src.plot.plot     import *
 
 ###############################################
-### A step with modified inlets/outlets
-class stepVar(base_app):
-    def __init__(self):
+### flow past Cylinder 
+class cylinder(base_app):
+    def __init__(self, r_cyl=0.1):
 
         # Free arguments
-        self.name        = 'variable-step'
-        self.Re_lbm      = 500.0
-        self.L_lbm       = 150
+        self.name        = 'cylinder'
+        self.Re_lbm      = 100.0
+        self.L_lbm       = 151
         self.u_lbm       = 0.05
         self.rho_lbm     = 1.0
-        self.t_max       = 15.0
-        self.x_min       =-1.0
-        self.x_max       = 15.0
-        self.y_min       =-1.0
-        self.y_max       = 1.0
-        self.IBB         = False
-        self.stop        = 'it'
+        self.t_max       = 0.02
+        self.x_min       =-0.2
+        self.x_max       = 2.0
+        self.y_min       =-0.2
+        self.y_max       = 0.21
+        self.IBB         = True
+        self.stop        = 'obs'
         self.obs_cv_ct   = 1.0e-3
         self.obs_cv_nb   = 1000
+        self.r_cyl   = r_cyl
 
         # Output parameters
         self.output_freq = 500
@@ -36,19 +37,11 @@ class stepVar(base_app):
 
         # Deduce remaining lbm parameters
         self.compute_lbm_parameters()
-        
-    def create_obstacles(self, obs_u_size=1.5, obs_d_size=1.5,
-                         n_sample_u=100,n_sample_d=100, n_pts=4,
-                         obs_u_pos = [1.5,1.0],
-                         obs_d_pos = [4.0,-1.0]):
 
-        # Obstacles
-        self.obstacles = []
-        # name, n_pts, n_sample pts, type, size, pos):
-        square1 = obstacle('square1', n_pts, n_sample_u, 'square', obs_u_size, obs_u_pos)
-        self.obstacles.append(square1)
-        square2 = obstacle('square2', n_pts, n_sample_d, 'square', obs_d_size, obs_d_pos )
-        self.obstacles.append(square2)
+        # Obstacle
+        cylinder = obstacle('cylinder', 200, 2,
+                            'cylinder', self.r_cyl, [0.0,0.0])
+        self.obstacles = [cylinder]
 
     ### Compute remaining lbm parameters
     def compute_lbm_parameters(self):
@@ -56,11 +49,10 @@ class stepVar(base_app):
         self.Cs      = 1.0/math.sqrt(3.0)
         self.ny      = self.L_lbm
         self.u_avg   = 2.0*self.u_lbm/3.0
-        self.r_cyl   = 0.5
         self.D_lbm   = math.floor(self.ny*self.r_cyl/(self.y_max-self.y_min))
-        self.nu_lbm  = self.u_avg*self.L_lbm/self.Re_lbm
+        self.nu_lbm  = self.u_avg*self.D_lbm/self.Re_lbm
         self.tau_lbm = 0.5 + self.nu_lbm/(self.Cs**2)
-        self.dt      = self.Re_lbm*self.nu_lbm/self.L_lbm**2
+        self.dt      = self.Re_lbm*self.nu_lbm/self.D_lbm**2
         self.dx      = (self.y_max-self.y_min)/self.ny
         self.dy      = self.dx
         self.nx      = math.floor(self.ny*(self.x_max-self.x_min)/
@@ -82,6 +74,18 @@ class stepVar(base_app):
         # Output image
         lattice.generate_image(self.obstacles)
 
+        # Set buffers
+        self.drag_buff = buff('drag',
+                              lattice.dt,
+                              lattice.obs_cv_ct,
+                              lattice.obs_cv_nb,
+                              lattice.output_dir)
+        self.lift_buff = buff('lift',
+                              lattice.dt,
+                              lattice.obs_cv_ct,
+                              lattice.obs_cv_nb,
+                              lattice.output_dir)
+
         # Compute first equilibrium
         lattice.equilibrium()
         lattice.g = lattice.g_eq.copy()
@@ -96,7 +100,7 @@ class stepVar(base_app):
         ret  = (1.0 - math.exp(-val**2/(2.0*self.sigma**2)))
 
         for j in range(self.ny):
-            pt                  = lattice.get_coords(0, j)
+            pt               = lattice.get_coords(0, j)
             lattice.u_left[:,j] = ret*self.u_lbm*self.poiseuille(pt)
 
         lattice.u_top[0,:]   = 0.0
@@ -109,7 +113,6 @@ class stepVar(base_app):
 
         # Obstacle
         lattice.bounce_back_obstacle(self.obstacles[0])
-        lattice.bounce_back_obstacle(self.obstacles[1])
 
         # Wall BCs
         lattice.zou_he_bottom_wall_velocity()
@@ -132,6 +135,31 @@ class stepVar(base_app):
 
         # Increment plotting counter
         self.output_it += 1
+
+    ### Compute observables
+    def observables(self, lattice, it):
+
+        drag, lift = lattice.drag_lift(self.obstacles[0],
+                                       self.rho_lbm, self.u_avg, self.D_lbm)
+        self.add_buff(drag, lift, lattice, it)
+
+    ### Handle drag/lift buffers
+    def add_buff(self, Cx, Cy, lattice, it):
+
+        # Add to buffer and check for convergence
+        self.drag_buff.add(Cx)
+        self.lift_buff.add(Cy)
+
+        avg_Cx, dcx = self.drag_buff.mv_avg()
+        avg_Cy, dcy = self.lift_buff.mv_avg()
+
+        # Write to file
+        filename = lattice.output_dir+'drag_lift'
+        with open(filename, 'a') as f:
+            f.write('{} {} {} {} {} {} {}\n'.format(it*self.dt,
+                                                    Cx,     Cy,
+                                                    avg_Cx, avg_Cy,
+                                                    dcx,    dcy))
 
     ### Poiseuille flow
     def poiseuille(self, pt):
