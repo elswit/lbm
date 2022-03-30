@@ -14,7 +14,7 @@ class stepVar(base_app):
     def __init__(self):
 
         # Free arguments
-        self.name        = 'step'
+        self.name        = 'variable-step'
         self.Re_lbm      = 500.0
         self.L_lbm       = 150
         self.u_lbm       = 0.05
