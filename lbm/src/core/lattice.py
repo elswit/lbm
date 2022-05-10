@@ -15,7 +15,7 @@ from   lbm.src.plot.plot     import *
 class lattice:
     ### ************************************************
     ### Constructor
-    def __init__(self, app):
+    def __init__(self, app, geometry_param):
 
         # Set default values
         self.name      = 'lattice'
@@ -46,6 +46,7 @@ class lattice:
         self.it_max    = 1000
         self.obs_cv_ct = 1.0e-1
         self.obs_cv_nb = 500
+        self.geo_param = geometry_param
 
         # Check if provided app has other parameters
         if hasattr(app, "name"):      self.name      = app.name
@@ -80,7 +81,7 @@ class lattice:
         # Output dirs
         time             = datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
         self.results_dir = './results/'
-        self.output_dir  = self.results_dir+str(time)+'/'
+        self.output_dir  = self.results_dir+str(self.geo_param)+'/'
         self.png_dir     = self.output_dir+'./png/'
 
         if (not os.path.exists(self.results_dir)):

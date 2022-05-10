@@ -6,6 +6,37 @@ import matplotlib.pyplot  as plt
 
 ### ************************************************
 ### Output 2D flow amplitude
+def plot_scalar_2D(lattice, val_min, val_max, output_it, dpi):
+
+    # Compute norm
+    v = np.sqrt(lattice.u[0,:,:]**2+lattice.u[1,:,:]**2)
+
+    # Mask obstacles
+    v[np.where(lattice.lattice > 0.0)] = -1.0
+    vm = np.ma.masked_where((v < 0.0), v)
+    vm = np.rot90(vm)
+
+    # Plot
+    plt.clf()
+    fig, ax = plt.subplots(figsize=plt.figaspect(vm))
+    fig.subplots_adjust(0,0,1,1)
+    plt.imshow(vm,
+               cmap = 'RdBu_r',
+               vmin = val_min*lattice.u_lbm,
+               vmax = val_max*lattice.u_lbm,
+               interpolation = 'spline16')
+
+    filename = lattice.png_dir+'u_norm_'+str(output_it)+'.png'
+    plt.axis('off')
+    plt.savefig(filename, dpi=dpi)
+    plt.close()
+
+### ************************************************
+
+
+
+### ************************************************
+### Output 2D flow amplitude
 def plot_norm(lattice, val_min, val_max, output_it, dpi):
 
     # Compute norm
